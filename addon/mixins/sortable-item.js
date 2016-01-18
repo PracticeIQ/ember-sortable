@@ -328,36 +328,62 @@ export default Mixin.create({
   */
   _makeDragHandler(startEvent) {
     const groupDirection = this.get('group.direction');
-    let dragOrigin;
-    let elementOrigin;
-    let scrollOrigin;
+    const constrainDirection = this.get('group.constrainDirection');
+
+    let dragOriginX, dragOriginY;
+    let elementOriginX, elementOriginY;
+    let scrollOriginX, scrollOriginY;
     let parentElement = $(this.element.parentNode);
 
-    if (groupDirection === 'x') {
-      dragOrigin = getX(startEvent);
-      elementOrigin = this.get('x');
-      scrollOrigin = parentElement.offset().left;
+    if (constrainDirection) {
+
+      if (groupDirection === 'x') {
+        dragOriginX = getX(startEvent);
+        elementOriginX = this.get('x');
+        scrollOriginX = parentElement.offset().left;
+
+        return event => {
+          let dx = getX(event) - dragOriginX;
+          let scrollX = parentElement.offset().left;
+          let x = elementOriginX + dx + (scrollOriginX - scrollX);
+
+          this._drag(x);
+        };
+      }
+
+      if (groupDirection === 'y') {
+        dragOriginY = getY(startEvent);
+        elementOriginY = this.get('y');
+        scrollOriginY = parentElement.offset().top;
+
+        return event => {
+          let dy = getY(event) - dragOriginY;
+          let scrollY = parentElement.offset().top;
+          let y = elementOriginY + dy + (scrollOriginY - scrollY);
+
+          this._drag(y);
+        };
+      }
+    } else {
+
+      dragOriginX = getX(startEvent);
+      dragOriginY = getY(startEvent);
+      elementOriginX = this.get('x');
+      elementOriginY = this.get('y');
+      scrollOriginX = parentElement.offset().left;
+      scrollOriginY = parentElement.offset().top;
 
       return event => {
-        let dx = getX(event) - dragOrigin;
+        let pageX = getX(event);
+        let pageY = getY(event);
+        let dx = pageX - dragOriginX;
+        let dy = pageY - dragOriginY;
         let scrollX = parentElement.offset().left;
-        let x = elementOrigin + dx + (scrollOrigin - scrollX);
-
-        this._drag(x);
-      };
-    }
-
-    if (groupDirection === 'y') {
-      dragOrigin = getY(startEvent);
-      elementOrigin = this.get('y');
-      scrollOrigin = parentElement.offset().top;
-
-      return event => {
-        let dy = getY(event) - dragOrigin;
         let scrollY = parentElement.offset().top;
-        let y = elementOrigin + dy + (scrollOrigin - scrollY);
+        let x = elementOriginX + dx + (scrollOriginX - scrollX);
+        let y = elementOriginY + dy + (scrollOriginY - scrollY);
 
-        this._drag(y);
+        this._drag(x, y, pageX, pageY);
       };
     }
   },
@@ -372,6 +398,10 @@ export default Mixin.create({
     if (group) {
       group[method](...args);
     }
+  },
+
+  _sendDrag(position) {
+    this.sendAction("onDrag", position);
   },
 
   /**
@@ -390,21 +420,34 @@ export default Mixin.create({
     if (!this.element) { return; }
 
     const groupDirection = this.get('group.direction');
+    const constrainDirection = this.get('group.constrainDirection');
 
-    if (groupDirection === 'x') {
+    if (constrainDirection) {
+
+      if (groupDirection === 'x') {
+        let x = this.get('x');
+        let dx = x - this.element.offsetLeft + parseFloat(this.$().css('margin-left'));
+
+        this.$().css({
+          transform: `translateX(${dx}px)`
+        });
+      }
+      if (groupDirection === 'y') {
+        let y = this.get('y');
+        let dy = y - this.element.offsetTop;
+
+        this.$().css({
+          transform: `translateY(${dy}px)`
+        });
+      }
+    } else {
       let x = this.get('x');
       let dx = x - this.element.offsetLeft + parseFloat(this.$().css('margin-left'));
-
-      this.$().css({
-        transform: `translateX(${dx}px)`
-      });
-    }
-    if (groupDirection === 'y') {
       let y = this.get('y');
       let dy = y - this.element.offsetTop;
 
       this.$().css({
-        transform: `translateY(${dy}px)`
+        transform: `translateX(${dx}px) translateY(${dy}px)`
       });
     }
   },
@@ -413,15 +456,24 @@ export default Mixin.create({
     @method _drag
     @private
   */
-  _drag(dimension) {
+  _drag(dimension, secondaryDimension, pageX, pageY) {
     let updateInterval = this.get('updateInterval');
     const groupDirection = this.get('group.direction');
+    const constrainDirection = this.get('group.constrainDirection');
 
-    if (groupDirection === 'x') {
+    if (constrainDirection) {
+
+      if (groupDirection === 'x') {
+        this.set('x', dimension);
+      }
+      if (groupDirection === 'y') {
+        this.set('y', dimension);
+      }
+    } else {
       this.set('x', dimension);
-    }
-    if (groupDirection === 'y') {
-      this.set('y', dimension);
+      this.set('y', secondaryDimension);
+
+      run.throttle(this, '_sendDrag', {x: pageX, y: pageY}, updateInterval);
     }
 
     run.throttle(this, '_tellGroup', 'update', updateInterval);
