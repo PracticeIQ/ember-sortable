@@ -71,7 +71,7 @@ export default Mixin.create({
     @type Boolean
     @default false
   */
-  isLastNew: false,
+  isLastNew: computed.alias('model.isLastNew'),
 
   /**
     True if the item was dropped during the interaction
@@ -215,8 +215,6 @@ export default Mixin.create({
     // scheduled to prevent deprecation warning:
     // "never change properties on components, services or models during didInsertElement because it causes significant performance degradation"
     run.schedule("afterRender", this, "_tellGroup", "registerItem", this);
-
-    this.set("isLastNew", this.get("model.isLastNew"));
   },
 
   /**
