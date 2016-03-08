@@ -5,7 +5,7 @@ const { Promise } = Ember.RSVP;
 
 export default Mixin.create({
   classNames: ['sortable-item'],
-  classNameBindings: ['isDragging', 'isDropping', 'isLastNew:is-last-new'],
+  classNameBindings: ['isDragging', 'isDropping', 'isLastNew:is-last-new', 'isFirstNew:is-first-new'],
 
   /**
     Group to which the item belongs.
@@ -72,6 +72,16 @@ export default Mixin.create({
     @default false
   */
   isLastNew: computed.alias('model.isLastNew'),
+
+  /**
+    True if this item is the first new item. Allows styling the first new item
+    in the set differently.
+    @property isLastNew
+    @type Boolean
+    @default false
+  */
+
+  isFirstNew: computed.alias('model.isFirstNew'),
 
   /**
     True if the item was dropped during the interaction
@@ -485,7 +495,7 @@ export default Mixin.create({
       run.throttle(this, '_sendDrag', {x: pageX, y: pageY}, updateInterval);
     }
 
-    run.throttle(this, '_tellGroup', 'update', updateInterval);
+      run.throttle(this, '_tellGroup', 'update', updateInterval);
   },
 
   /**
