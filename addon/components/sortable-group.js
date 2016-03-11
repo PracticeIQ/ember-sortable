@@ -22,6 +22,14 @@ export default Component.extend({
   */
   constrainDirection: true,
 
+  /**
+    The default behavior is to slide the items in place as you
+    drag. You can bypass this by setting noSlide to true, in
+    which case an item will get the insert-highlight class when
+    the dragged item is over it.
+   */
+  noSlide: false,
+
 
   /**
     @property model
@@ -89,7 +97,8 @@ export default Component.extend({
     Update item positions.
     @method update
   */
-  update() {
+
+  _update() {
     let sortedItems = this.get('sortedItems');
     let position = this._itemPosition;
 
@@ -115,6 +124,38 @@ export default Component.extend({
 
       position += get(item, dimension);
     });
+  },
+
+  update(dragPosition) {
+    let noSlide = get(this, 'noSlide');
+    if (noSlide) {
+      // with noSlide, we need to track our position and
+      // which items we are over so we can set/remove classes
+      // on them
+      if (dragPosition) {
+        // if there is a dragPosition, then something is moving
+        let sortedItems = this.get('sortedItems');
+
+        sortedItems.forEach( (item, index) => {
+          let isOnMe = item._isOnMe(dragPosition.x, dragPosition.y);
+          if (isOnMe && !get(item,'isDragging')) {
+            set(item, 'insertHighlight', true);
+          } else {
+            set(item, 'insertHighlight', false);
+          }
+        });
+
+      } else {
+        // no dragPosition, clear
+        let sortedItems = this.get('sortedItems');
+        sortedItems.forEach(item => {
+          set(item, 'insertHighlight', false);
+        });
+        this._update();
+      }
+    } else {
+      this._update();
+    }
   },
 
   /**

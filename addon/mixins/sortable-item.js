@@ -5,7 +5,9 @@ const { Promise } = Ember.RSVP;
 
 export default Mixin.create({
   classNames: ['sortable-item'],
-  classNameBindings: ['isDragging', 'isDropping', 'isLastNew:is-last-new', 'isFirstNew:is-first-new'],
+  classNameBindings: ['isDragging', 'isDropping', 'isLastNew:is-last-new', 'isFirstNew:is-first-new', 'insertHighlight:insert-highlight'],
+
+  insertHighlight: false,
 
   /**
     Group to which the item belongs.
@@ -185,6 +187,38 @@ export default Mixin.create({
       }
     }
   }).volatile(),
+
+  _myBox: function() {
+    let el = this.$();
+    let width = el.outerWidth(true);
+    let height = el.outerHeight(true);
+    let offset = el.offset();
+
+    return [
+      {
+        x: offset.left,
+        y: offset.top
+      },
+      {
+        x: offset.left + width,
+        y: offset.top + height
+      }
+    ];
+
+  }.property().volatile(),
+
+  _isOnMe: function(dragX, dragY) {
+    let myBox = this.get("_myBox");
+
+    if (dragX > myBox[0].x && dragX < myBox[1].x &&
+        dragY > myBox[0].y && dragY < myBox[1].y) {
+
+      return true;
+    }
+
+    return false;
+  },
+
 
   /**
     Width of the item.
@@ -495,7 +529,7 @@ export default Mixin.create({
       run.throttle(this, '_sendDrag', {x: pageX, y: pageY}, updateInterval);
     }
 
-      run.throttle(this, '_tellGroup', 'update', updateInterval);
+    run.throttle(this, '_tellGroup', 'update', {x: pageX, y: pageY}, updateInterval);
   },
 
   /**
