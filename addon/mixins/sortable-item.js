@@ -66,6 +66,22 @@ export default Mixin.create({
   */
   isDropping: false,
 
+  //
+  // These are a temporary fix until we can have external drop targets.
+  // If you are dropping 200px above the list, we assume its an external
+  // target and turn off the drop animation (which appear like the item is
+  // flying back into the list even though it's actually being removed.
+  //
+  _dragY: null,
+  isAboveTheFold: function() {
+    let isDropping = this.get('isDropping');
+    let wasDropped = this.get('wasDropped');
+    let relativeY = this.get('_dragY');
+
+    return ( (isDropping || wasDropped) && (relativeY < 200));
+
+  }.property('isDropping', 'wasDropped', '_dragY'),
+
   /**
     True if this item is the last new item. Allows styling the last new item
     in the set differently.
@@ -525,6 +541,7 @@ export default Mixin.create({
     } else {
       this.set('x', dimension);
       this.set('y', secondaryDimension);
+      this.set('_dragY', pageY);
 
       run.throttle(this, '_sendDrag', {x: pageX, y: pageY}, updateInterval);
     }
@@ -545,6 +562,9 @@ export default Mixin.create({
     this.set('isDropping', true);
 
     this._tellGroup('update');
+
+    // if out of bounds, turn off animations
+    if (this.get('isAboveTheFold')) this.freeze();
 
     this._waitForTransition()
       .then(run.bind(this, '_complete'));
@@ -586,6 +606,8 @@ export default Mixin.create({
     this.set('isDropping', false);
     this.set('wasDropped', true);
     this._tellGroup('commit');
+
+    if (this.get('isAboveTheFold')) this.thaw();
   }
 });
 
