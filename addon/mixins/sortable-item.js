@@ -290,17 +290,50 @@ export default Mixin.create({
     @method mouseDown
   */
   mouseDown(event) {
+
     if (event.which !== 1) { return; }
     if (event.ctrlKey) { return; }
 
-    this._primeDrag(event);
+    let longPress = true;
+
+    function cancelLongPress() {
+      longPress = false;
+    }
+
+    Ember.run.later( () => {
+      if (longPress) {
+        this._primeDrag(event);
+      }
+
+      $(window).off("mousemove mouseup", cancelLongPress);
+    }, 90);
+
+    this.set("isDragging", false);
+    this.set("isDropping", false);
+    $(window).on("mousemove mouseup", cancelLongPress);
   },
 
   /**
     @method touchStart
   */
   touchStart(event) {
-    this._primeDrag(event);
+    let longPress = true;
+
+    function cancelLongPress() {
+      longPress = false;
+    }
+
+    Ember.run.later( () => {
+      if (longPress) {
+        this._primeDrag(event);
+      }
+
+      $(window).off("touchmove touchend", cancelLongPress);
+    }, 150);
+
+    this.set("isDragging", false);
+    this.set("isDropping", false);
+    $(window).on("touchmove touchend", cancelLongPress);
   },
 
   /**
