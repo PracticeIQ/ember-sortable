@@ -300,13 +300,13 @@ export default Mixin.create({
       longPress = false;
     }
 
-    Ember.run.later( () => {
+    Ember.run.next( () => {
       if (longPress) {
         this._primeDrag(event);
       }
 
       $(window).off("mousemove mouseup", cancelLongPress);
-    }, 90);
+    });
 
     this.set("isDragging", false);
     this.set("isDropping", false);
@@ -323,13 +323,13 @@ export default Mixin.create({
       longPress = false;
     }
 
-    Ember.run.later( () => {
+    Ember.run.next( () => {
       if (longPress) {
         this._primeDrag(event);
       }
 
       $(window).off("touchmove touchend", cancelLongPress);
-    }, 150);
+    });
 
     this.set("isDragging", false);
     this.set("isDropping", false);
