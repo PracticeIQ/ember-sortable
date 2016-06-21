@@ -243,9 +243,13 @@ export default Mixin.create({
   */
   width: computed(function() {
     let el = this.$();
-    let width = el.outerWidth(true);
+    let width = 0;
 
-    width += getBorderSpacing(el).horizontal;
+    if (el) {
+      width = el.outerWidth(true);
+
+      width += getBorderSpacing(el).horizontal;
+    }
 
     return width;
   }).volatile(),
@@ -257,12 +261,16 @@ export default Mixin.create({
   */
   height: computed(function() {
     let el = this.$();
-    let height = el.outerHeight();
+    let height = 0;
 
-    let marginBottom = parseFloat(el.css('margin-bottom'));
-    height += marginBottom;
+    if (el) {
+      height = el.outerHeight();
 
-    height += getBorderSpacing(el).vertical;
+      let marginBottom = parseFloat(el.css('margin-bottom'));
+      height += marginBottom;
+
+      height += getBorderSpacing(el).vertical;
+    }
 
     return height;
   }).volatile(),
@@ -302,6 +310,7 @@ export default Mixin.create({
 
     Ember.run.next( () => {
       if (longPress) {
+        longPress = false;
         this._primeDrag(event);
       }
 
@@ -402,6 +411,7 @@ export default Mixin.create({
   */
   _startDrag(event) {
     if (this.get('isBusy')) { return; }
+    if (!this.$()) { return; }
 
     let drag = this._makeDragHandler(event);
 
